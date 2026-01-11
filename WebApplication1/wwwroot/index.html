@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Todo App</title>
+    <style>
+        :root {
+            --container-bg: rgba(255, 255, 255, 0.75);
+            --input-bg: rgba(255, 255, 255, 0.85);
+            --text: #222;
+            --label-text: #444;
+            --border: rgba(0,0,0,0.15);
+            --completed-bg: rgba(240, 240, 240, 0.9);
+            --shadow: rgba(0,0,0,0.15);
+        }
+        body.dark {
+            --container-bg: rgba(30, 30, 40, 0.85);
+            --input-bg: rgba(40, 40, 60, 0.8);
+            --text: #ffffff;
+            --label-text: #ffffff;
+            --border: rgba(255,255,255,0.15);
+            --completed-bg: rgba(50, 50, 60, 0.9);
+            --shadow: rgba(0,0,0,0.6);
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: var(--text);
+            transition: background 0.6s ease;
+            background-image: url('https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=4000');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            image-rendering: crisp-edges;
+        }
+        body.dark {
+            background-image: url('https://images.pexels.com/photos/669996/pexels-photo-669996.jpeg?auto=compress&cs=tinysrgb&w=4000&h=3000&dpr=2');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            image-rendering: crisp-edges;
+        }
+        h1 { text-align: center; color: var(--text); margin-bottom: 20px; text-shadow: 0 2px 6px var(--shadow); }
+        .container {
+            background: var(--container-bg);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 12px 40px var(--shadow);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        .dark-toggle {
+            padding: 10px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .dark-toggle:hover { background: #2980b9; }
+
+        .add-todo-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 700px;
+            margin: 0 auto 30px auto;
+        }
+        .task-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .task-group label {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: var(--label-text);
+            font-weight: 500;
+        }
+        .task-group input {
+            padding: 16px;
+            font-size: 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            background: var(--input-bg);
+            color: var(--text);
+        }
+        .task-group input::placeholder {
+            color: #aaa;
+        }
+        .task-group input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+        }
+
+        .bottom-row {
+            display: flex;
+            align-items: end;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 180px;
+        }
+        .form-group label {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: var(--label-text);
+            font-weight: 500;
+        }
+        .form-group input[type="date"],
+        .form-group input[type="time"] {
+            padding: 14px;
+            font-size: 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            background: var(--input-bg);
+            color: var(--text);
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+        }
+
+        .add-button, .clear-all, .delete-btn {
+            padding: 14px 32px;
+            font-size: 16px;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .add-button {
+            background: #3498db;
+        }
+        .add-button:hover { background: #2980b9; }
+
+        .clear-all, .delete-btn {
+            background: #e74c3c;
+        }
+        .clear-all:hover, .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        .clear-all {
+            display: block;
+            margin: 30px auto 30px auto;
+        }
+
+        ul { list-style: none; padding: 0; margin-top: 20px; }
+        li {
+            padding: 18px;
+            background: var(--container-bg);
+            margin: 12px 0;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        li.completed { opacity: 0.8; background: var(--completed-bg); }
+        li.overdue {
+            border-left: 6px solid #e74c3c;
+            background: rgba(231, 76, 60, 0.2);
+        }
+        body.dark li.overdue { background: rgba(231, 76, 60, 0.3); }
+        .todo-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .todo-text { cursor: pointer; flex: 1; font-size: 17px; color: var(--text); }
+        .due-date { font-size: 14px; color: var(--text); margin-left: 8px; }
+        .overdue-badge, .priority-badge {
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            color: white;
+        }
+        .overdue-badge { background: #e74c3c; }
+        .priority-high { background: #e74c3c; }
+        .priority-medium { background: #f39c12; }
+        .priority-low { background: #27ae60; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 My Todo App</h1>
+            <button class="dark-toggle" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+        </div>
+       
+        <div class="add-todo-form">
+            <div class="task-group">
+                <label for="todoInput">Task</label>
+                <input type="text" id="todoInput" placeholder="Add a new todo..." />
+            </div>
+            
+            <div class="bottom-row">
+                <div class="form-group">
+                    <label for="dueDateInput">Due Date (optional)</label>
+                    <input type="date" id="dueDateInput" />
+                </div>
+
+                <div class="form-group">
+                    <label for="dueTimeInput">Due Time (optional)</label>
+                    <input type="time" id="dueTimeInput" />
+                </div>
+                
+                <button class="add-button" onclick="addTodo()">Add Todo</button>
+            </div>
+        </div>
+
+        <button class="clear-all" onclick="clearAll()" id="clearBtn" style="display:none;">Clear All</button>
+        <ul id="todoList"></ul>
+    </div>
+
+    <script>
+        let todos = [];
+        let nextId = 1;
+
+        function loadFromStorage() {
+            const saved = localStorage.getItem("myTodos");
+            if (saved) {
+                todos = JSON.parse(saved);
+                if (todos.length > 0) {
+                    nextId = Math.max(...todos.map(t => t.id)) + 1;
+                }
+            }
+        }
+
+        function saveToStorage() {
+            localStorage.setItem("myTodos", JSON.stringify(todos));
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark");
+            const isDark = document.body.classList.contains("dark");
+            localStorage.setItem("darkMode", isDark);
+            updateToggleButton();
+        }
+       
+        function updateToggleButton() {
+            const btn = document.querySelector(".dark-toggle");
+            btn.textContent = document.body.classList.contains("dark") ? "☀️ Light Mode" : "🌙 Dark Mode";
+        }
+       
+        if (localStorage.getItem("darkMode") === "true") {
+            document.body.classList.add("dark");
+        }
+        updateToggleButton();
+
+        function getDueDateTimeForSort(todo) {
+            if (!todo.dueDate) return Infinity;
+            let dateStr = todo.dueDate;
+            if (todo.dueTime) {
+                dateStr += `T${todo.dueTime}`;
+            } else {
+                dateStr += `T00:00`;
+            }
+            return new Date(dateStr).getTime();
+        }
+
+        function getEffectivePriority(todo) {
+            const dueTimestamp = getDueDateTimeForSort(todo);
+            if (dueTimestamp === Infinity) return "Low";
+            const now = Date.now();
+            const diffHours = (dueTimestamp - now) / (1000 * 60 * 60);
+
+            if (!todo.isCompleted && diffHours < 0) {
+                return "Overdue";
+            }
+            if (diffHours <= 96) return "High";     // ≤4 days
+            if (diffHours <= 216) return "Medium";  // ≤9 days
+            return "Low";
+        }
+
+        const priorityOrder = { Overdue: 0, High: 1, Medium: 2, Low: 3 };
+
+        function loadTodos() {
+            todos.sort((a, b) => {
+                const pa = getEffectivePriority(a);
+                const pb = getEffectivePriority(b);
+                if (pa === "Overdue" && pb !== "Overdue") return -1;
+                if (pb === "Overdue" && pa !== "Overdue") return 1;
+
+                const timeA = getDueDateTimeForSort(a);
+                const timeB = getDueDateTimeForSort(b);
+                if (timeA !== timeB) return timeA - timeB;
+
+                return priorityOrder[pa] - priorityOrder[pb];
+            });
+
+            const list = document.getElementById("todoList");
+            list.innerHTML = "";
+           
+            document.getElementById("clearBtn").style.display = todos.length > 0 ? "block" : "none";
+
+            todos.forEach(todo => {
+                const li = document.createElement("li");
+                if (todo.isCompleted) li.classList.add("completed");
+
+                const effectivePriority = getEffectivePriority(todo);
+                let priorityBadge = "";
+                if (effectivePriority === "Overdue") {
+                    li.classList.add("overdue");
+                    priorityBadge = `<span class="overdue-badge">OVERDUE</span>`;
+                } else {
+                    const priorityClass = `priority-${effectivePriority.toLowerCase()}`;
+                    priorityBadge = `<span class="priority-badge ${priorityClass}">${effectivePriority}</span>`;
+                }
+
+                let dueText = "";
+                if (todo.dueDate) {
+                    const [year, month, day] = todo.dueDate.split('-');
+                    const date = new Date(year, month - 1, day);
+                    let text = `(Due: ${date.toLocaleDateString()}`;
+                    if (todo.dueTime) {
+                        const [hours, minutes] = todo.dueTime.split(':');
+                        const timeObj = new Date();
+                        timeObj.setHours(hours);
+                        timeObj.setMinutes(minutes);
+                        text += ` at ${timeObj.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'})}`;
+                    }
+                    text += `)`;
+                    dueText = `<span class="due-date">${text}</span>`;
+                }
+               
+                li.innerHTML = `
+                    <div class="todo-content">
+                        ${priorityBadge}
+                        <div>
+                            <span class="todo-text" ondblclick="toggleComplete(${todo.id})">
+                                ${todo.title}
+                            </span>
+                            ${dueText}
+                        </div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteTodo(${todo.id})">Delete</button>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function addTodo() {
+            const input = document.getElementById("todoInput");
+            const dueDateInput = document.getElementById("dueDateInput");
+            const dueTimeInput = document.getElementById("dueTimeInput");
+            const title = input.value.trim();
+            if (!title) return;
+
+            const newTodo = {
+                id: nextId++,
+                title,
+                dueDate: dueDateInput.value || null,
+                dueTime: dueTimeInput.value || null,
+                isCompleted: false
+            };
+            todos.push(newTodo);
+            input.value = "";
+            dueDateInput.value = "";
+            dueTimeInput.value = "";
+            saveToStorage();
+            loadTodos();
+        }
+
+        function deleteTodo(id) {
+            todos = todos.filter(t => t.id !== id);
+            saveToStorage();
+            loadTodos();
+        }
+
+        function toggleComplete(id) {
+            const todo = todos.find(t => t.id === id);
+            if (todo) {
+                todo.isCompleted = !todo.isCompleted;
+                saveToStorage();
+                loadTodos();
+            }
+        }
+
+        function clearAll() {
+            if (!confirm("Delete ALL todos? This cannot be undone!")) return;
+            todos = [];
+            saveToStorage();
+            loadTodos();
+        }
+
+        document.getElementById("todoInput").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") addTodo();
+        });
+
+        // FIXED: Now correctly sets min to today's date (allows selecting today)
+        window.onload = function() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${yyyy}-${mm}-${dd}`;
+            document.getElementById("dueDateInput").setAttribute("min", todayStr);
+        };
+
+        loadFromStorage();
+        loadTodos();
+    </script>
+</body>
+</html>
